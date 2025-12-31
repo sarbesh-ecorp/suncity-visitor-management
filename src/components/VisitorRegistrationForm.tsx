@@ -87,7 +87,7 @@ const VisitorRegistrationForm = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("https://sar.ecis.in/api/suncity/visitor/registration", {
+      const res = await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/registration", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -96,13 +96,13 @@ const VisitorRegistrationForm = () => {
       const data = await res.json();
       setVisitorId(data.visitorId);
 
-      await fetch("https://sar.ecis.in/api/suncity/visitor/submit", {
+      await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ visitorId, ip }),
       });
 
-      await fetch("https://sar.ecis.in/api/suncity/visitor/send-otp", {
+      await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ visitorId }),
@@ -127,7 +127,7 @@ const VisitorRegistrationForm = () => {
     try {
       setLoading(true);
       setOtpError("");
-      const res = await fetch("https://sar.ecis.in/api/suncity/visitor/verify-otp", {
+      const res = await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/verify-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

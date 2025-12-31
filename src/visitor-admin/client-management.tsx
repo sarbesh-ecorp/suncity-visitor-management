@@ -4,7 +4,6 @@ import {
   Search,
   X,
   Eye,
-  User,
   Mail,
   Phone,
   MapPin,
@@ -55,7 +54,7 @@ export default function VisitorUsersList() {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await fetch("https://sar.ecis.in/api/suncity/visitor");
+        const res = await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor");
         if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();
         setUsers(Array.isArray(data) ? data : []);

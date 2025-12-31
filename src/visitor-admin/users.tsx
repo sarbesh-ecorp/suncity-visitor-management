@@ -40,7 +40,7 @@ export default function VisitorSystemUsers() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("https://sar.ecis.in/api/suncity/auth/users");
+      const res = await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/auth/users");
       if (!res.ok) throw new Error("Failed to fetch users");
       const data: Visitor[] = await res.json();
       setUsers(data);
@@ -65,7 +65,7 @@ export default function VisitorSystemUsers() {
     }
 
     try {
-      const url =  "https://sar.ecis.in/api/suncity/auth/register";
+      const url =  "https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/auth/register";
 
       const method = "POST";
 
@@ -109,7 +109,7 @@ export default function VisitorSystemUsers() {
     if (!confirm("Really delete this user? This cannot be undone.")) return;
 
     try {
-      const res = await fetch(`https://sar.ecis.in/api/suncity/auth/users/delete/${id}`, {
+      const res = await fetch(`https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/auth/users/delete/${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Delete failed");
@@ -125,7 +125,7 @@ export default function VisitorSystemUsers() {
     if (!user) return;
 
     try {
-      const res = await fetch(`https://sar.ecis.in/api/suncity/auth/users/status/${id}`, {
+      const res = await fetch(`https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/auth/users/status/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ current_status: !user.current_status }),

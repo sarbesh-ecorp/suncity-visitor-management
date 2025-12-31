@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mail, Lock, LogIn } from "lucide-react";
+import { Mail, Lock } from "lucide-react";
 
 export default function VisitorLogin() {
   const [email, setEmail] = useState("");
@@ -19,7 +19,7 @@ export default function VisitorLogin() {
     setIsLoading(true);
 
     try {
-      const res = await fetch("https://sar.ecis.in/api/suncity/auth/login", {
+      const res = await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: email, password }),
