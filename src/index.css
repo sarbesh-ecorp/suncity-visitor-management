@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+video {
+  transform: scaleX(-1); /* optional selfie mirror */
+}
+
+@theme {
+  --color-suncity-brown: #775d42; 
+  --color-brown: #dfb674;
+  --color-brown-600: #c1944a;
+}
+
+input:focus{
+  box-shadow: none;
+}
+
+.homebanner{
+  height: calc(100vh - (98px + 60px));
+}
+
+.homebanner::before{
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: rgb(0 0 0 / 75%);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
