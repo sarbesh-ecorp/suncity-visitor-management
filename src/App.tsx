@@ -8,7 +8,7 @@ import VisitorSystemUsers from "./visitor-admin/users";
 
 export default function App() {
   return (
-    <BrowserRouter basename="/visitor">
+    <BrowserRouter>
       <Routes>
         <Route path="/" element={<Client />} />
         
