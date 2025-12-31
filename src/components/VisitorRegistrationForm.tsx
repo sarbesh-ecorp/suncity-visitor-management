@@ -94,18 +94,20 @@ const VisitorRegistrationForm = () => {
       });
 
       const data = await res.json();
-      setVisitorId(data.visitorId);
+      const newVisitorId = data.visitorId;
+
+      setVisitorId(newVisitorId);
 
       await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visitorId, ip }),
+        body: JSON.stringify({ visitorId: newVisitorId, ip }),
       });
 
       await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visitorId }),
+        body: JSON.stringify({ visitorId: newVisitorId }),
       });
 
       setShowOTPPopup(true);
