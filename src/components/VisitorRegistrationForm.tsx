@@ -171,7 +171,6 @@ const VisitorRegistrationForm = () => {
       setOtpError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
-      setShowPopup(false);
     }
   };
 
