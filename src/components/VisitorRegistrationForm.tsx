@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const VisitorRegistrationForm = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [showPopup, setShowPopup] = useState(false);
   const [showOTPPopup, setShowOTPPopup] = useState(false);
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
   const [visitorId, setVisitorId] = useState<number | null>(null);
   const [ip, setIp] = useState("Fetching...");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
 
   const [formData, setFormData] = useState({
     referral: "",
@@ -87,34 +90,46 @@ const VisitorRegistrationForm = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/registration", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
+      let currentVisitorId = visitorId;
 
-      const data = await res.json();
-      const newVisitorId = data.visitorId;
+      if (!visitorId) {
+        const res = await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/registration", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+        });
 
-      setVisitorId(newVisitorId);
+        const data = await res.json();
+        currentVisitorId = data.visitorId;
+        setVisitorId(currentVisitorId);
 
-      await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visitorId: newVisitorId, ip }),
-      });
+        await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ visitorId: currentVisitorId, ip }),
+        });
+      } else {
+        await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/update-phone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            visitorId,
+            phone: formData.phone,
+          }),
+        });
+      }
 
       await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/send-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visitorId: newVisitorId }),
+        body: JSON.stringify({ visitorId: currentVisitorId }),
       });
 
+      setIsEditingPhone(false);
       setShowOTPPopup(true);
-    }
-    catch (err) {
+    } catch (err) {
       console.error(err);
-      alert("Something went wrong. Please try again.");
+      alert("Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -143,6 +158,7 @@ const VisitorRegistrationForm = () => {
 
       if (!res.ok) {
         setOtpError(data.message || "Invalid OTP");
+        setOtp("")
         return;
       }
 
@@ -166,7 +182,7 @@ const VisitorRegistrationForm = () => {
       });
 
       setShowOTPPopup(false);
-      setShowPopup(true);
+      navigate('/thank-you')
     } catch (err) {
       setOtpError("Something went wrong. Please try again.");
     } finally {
@@ -565,7 +581,7 @@ const VisitorRegistrationForm = () => {
         </form>
       </div>
 
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {showOTPPopup && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4"
           >
@@ -577,7 +593,27 @@ const VisitorRegistrationForm = () => {
               </div>
 
               <h2 className="text-2xl font-bold text-gray-800">Verify OTP</h2>
-              <p className="mt-2 text-gray-600">Enter the 4-digit OTP sent to your phone</p>
+              <p className="mt-2 text-gray-600">
+                Enter the 4-digit OTP sent to
+              </p>
+
+              <input
+                type="tel"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, phone: e.target.value }))
+                }
+                className="mt-4 w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-semibold focus:border-suncity-brown focus:ring-2 focus:ring-indigo-200 focus:outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditingPhone(true);
+                }}
+                className="mt-2 text-sm text-indigo-600 underline"
+              >
+                Edit phone number
+              </button>
               <input
                 type="text"
                 maxLength={4}
@@ -595,31 +631,141 @@ const VisitorRegistrationForm = () => {
                 </p>
               )}
               <button
-                onClick={handleOtpSubmit}
+                type="submit"
                 disabled={loading}
-                className="mt-6 w-full rounded-xl bg-suncity-brown text-white py-3 font-semibold transition hover:opacity-90 disabled:opacity-50"
+                onClick={isEditingPhone ? handleSubmit : handleOtpSubmit}
+                className="px-10 py-3 bg-suncity-brown text-white rounded-lg"
               >
-                {loading ? "Verifying..." : "Verify OTP"}
+                {loading
+                  ? "Submitting..."
+                  : isEditingPhone
+                  ? "Update Phone & Resend OTP"
+                  : "Submit Registration"}
               </button>
             </div>
           </div>
         )}
-      </AnimatePresence>
-
+      </AnimatePresence> */}
       <AnimatePresence>
-        {showPopup && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4"
+        {showOTPPopup && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4 backdrop-blur-sm"
           >
-            <div className="bg-white rounded-3xl p-12 text-center shadow-2xl max-w-md"
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25 }}
+              className="bg-white rounded-3xl p-10 shadow-2xl max-w-md w-full text-center"
             >
-              <div className="text-6xl mb-6"
-              >
-                🎉
+              <div className="mb-6 animate-pulse">
+                <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-indigo-100">
+                  <span className="text-5xl">🔐</span>
+                </div>
               </div>
-              <h2 className="text-3xl font-bold text-gray-800">Registration Successful!</h2>
-              <p className="mt-4 text-gray-600">Thank you for registering. We'll get in touch soon.</p>
-            </div>
-          </div>
+
+              <h2 className="text-3xl font-bold text-gray-800 mb-3">
+                Verify Your Phone
+              </h2>
+
+              <p className="text-gray-600 mb-8">
+                We've sent a 4-digit OTP to
+              </p>
+              <div className="mb-6">
+                <p className="text-xl font-semibold text-gray-800">
+                  {formData.phone || "+91 __________"}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingPhone(true)}
+                  className="mt-3 text-sm text-indigo-600 hover:text-indigo-800 font-medium underline transition-colors"
+                >
+                  Edit phone number
+                </button>
+              </div>
+              {isEditingPhone && (
+                <motion.input
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, phone: e.target.value }))
+                  }
+                  className="mb-4 w-full rounded-xl border border-gray-300 px-5 py-4 text-center text-lg font-medium focus:border-suncity-brown focus:ring-4 focus:ring-indigo-100 focus:outline-none transition-all"
+                  placeholder="Enter phone number"
+                  autoFocus
+                />
+              )}
+              <div className="flex justify-center gap-3 mb-8">
+                {[0, 1, 2, 3].map((index) => (
+                  <input
+                    key={index}
+                    id={`otp-input-${index}`}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={otp[index] || ""}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      const newOtp = otp.split("");
+
+                      newOtp[index] = value;
+                      setOtp(newOtp.join(""));
+                      setOtpError("");
+
+                      if (value && index < 3) {
+                        document.getElementById(`otp-input-${index + 1}`)?.focus();
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Backspace") {
+                        const newOtp = otp.split("");
+
+                        if (otp[index]) {
+                          // Clear current digit
+                          newOtp[index] = "";
+                          setOtp(newOtp.join(""));
+                        } else if (index > 0) {
+                          // Move focus back and clear previous digit
+                          document.getElementById(`otp-input-${index - 1}`)?.focus();
+                          newOtp[index - 1] = "";
+                          setOtp(newOtp.join(""));
+                        }
+                      }
+                    }}
+                    className="w-16 h-16 text-3xl font-bold text-center rounded-xl border-2 border-gray-300 focus:border-suncity-brown focus:ring-4 focus:ring-indigo-100 focus:outline-none transition-all"
+                  />
+                ))}
+              </div>
+
+              {otpError && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="text-red-600 text-sm font-medium mb-6"
+                >
+                  {otpError}
+                </motion.p>
+              )}
+
+              <button
+                type="button"
+                disabled={loading}
+                onClick={isEditingPhone ? handleSubmit : handleOtpSubmit}
+                className="w-full py-4 bg-suncity-brown hover:bg-suncity-brown/90 text-white font-semibold text-lg rounded-xl shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading
+                  ? "Processing..."
+                  : isEditingPhone
+                  ? "Update Phone & Resend OTP"
+                  : "Verify & Complete Registration"}
+              </button>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

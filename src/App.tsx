@@ -5,12 +5,14 @@ import VisitorLogin from "./visitor-admin/login";
 import VisitorDashboard from "./visitor-admin/dashboard";
 import VisitorUsersList from "./visitor-admin/client-management";
 import VisitorSystemUsers from "./visitor-admin/users";
+import ThankYou from "./components/thankyou";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Client />} />
+        <Route path="/thank-you" element={<ThankYou />} />
         
         <Route path="/visitor-login" element={<VisitorLogin/>} />
         

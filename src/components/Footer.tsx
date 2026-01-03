@@ -41,7 +41,7 @@ const Footer = () => {
 
           {/* Right: Company Credit */}
           <div className="text-slate-300 text-xs">
-            © 2025 <span className="text-white font-semibold">Suncity Projects</span>
+            © 2026 <span className="text-white font-semibold">Suncity Projects</span>
           </div>
         </div>
       </div>
