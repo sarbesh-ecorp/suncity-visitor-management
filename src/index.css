@@ -15,7 +15,7 @@ input:focus{
 }
 
 .homebanner{
-  height: calc(100vh - (98px + 60px));
+  min-height: calc(100vh - (98px + 60px));
 }
 
 .homebanner::before{

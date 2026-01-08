@@ -2,22 +2,22 @@ import { Plus, FileText, Users, Building2, ArrowRight } from "lucide-react";
 
 const HomeScreen = ({ goToForm }: {goToForm: any}) => {
   return (
-    <div className="homebanner relative overflow-hidden flex items-center justify-center" style={{background: 'url(/visitor/bg.webp) center/cover no-repeat'}}>
+    <div className="homebanner relative overflow-hidden flex items-center justify-center" style={{background: 'url(/bg.webp) center/cover no-repeat'}}>
       <div className="relative z-10 max-w-6xl w-full text-center space-y-16">
         <div className="space-y-6 animate-fade-up">
-          <div className="project-logo mx-auto w-100"><img src="/visitor/logo-monarch.svg" alt="" /></div>
+          <div className="project-logo mx-auto w-100"><img src="/logo-monarch.svg" alt="" /></div>
         </div>
         <div className="flex justify-center">
           <button
             onClick={goToForm}
-            className="group relative px-12 py-8 bg-suncity-brown text-white font-bold text-xl rounded-2xl shadow-2xl hover:shadow-black/50 transform hover:scale-105 transition-all duration-500 overflow-hidden"
+            className="group relative lg:px-12 lg:py-8 px-6 py-4 bg-suncity-brown text-white font-bold lg:text-xl rounded-2xl shadow-2xl hover:shadow-black/50 transform hover:scale-105 transition-all duration-500 overflow-hidden"
           >
             <span className="absolute inset-0 w-full h-full bg-white opacity-0 group-hover:opacity-20 translate-x-[-100%] group-hover:translate-x-full transition-transform duration-1000 skew-x-12" />
 
             <div className="flex items-center gap-4">
-              <Plus className="w-10 h-10 group-hover:rotate-90 transition duration-700" strokeWidth={3} />
+              <Plus className="lg:w-10 lg:h-10 group-hover:rotate-90 transition duration-700" strokeWidth={3} />
               <span className="tracking-wider">START NEW REGISTRATION</span>
-              <ArrowRight className="w-8 h-8 group-hover:translate-x-4 transition duration-300" />
+              <ArrowRight className="lg:w-8 lg:h-8 group-hover:translate-x-4 transition duration-300" />
             </div>
           </button>
         </div>
