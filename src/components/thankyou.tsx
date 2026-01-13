@@ -17,7 +17,7 @@ const ThankYou = () => {
     }, 1000);
 
     const redirect = setTimeout(() => {
-      navigate("/");
+      navigate("/visitor-management");
     }, 5000);
 
     return () => {
@@ -66,7 +66,7 @@ const ThankYou = () => {
         </div>
         <div className="mt-10">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/visitor-management")}
             className="text-sm text-indigo-600 hover:text-indigo-800 font-medium underline transition-colors"
           >
             Or click here to return immediately

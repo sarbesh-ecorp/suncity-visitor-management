@@ -2,10 +2,10 @@ import { Plus, FileText, Users, Building2, ArrowRight } from "lucide-react";
 
 const HomeScreen = ({ goToForm }: {goToForm: any}) => {
   return (
-    <div className="homebanner relative overflow-hidden flex items-center justify-center" style={{background: 'url(/bg.webp) center/cover no-repeat'}}>
+    <div className="homebanner relative overflow-hidden flex items-center justify-center" style={{background: 'url(/visitor-management/bg.webp) center/cover no-repeat'}}>
       <div className="relative z-10 max-w-6xl w-full text-center space-y-16">
         <div className="space-y-6 animate-fade-up">
-          <div className="project-logo mx-auto w-100"><img src="/logo-monarch.svg" alt="" /></div>
+          <div className="project-logo mx-auto w-100"><img src="/visitor-management/logo-monarch.svg" alt="" /></div>
         </div>
         <div className="flex justify-center">
           <button

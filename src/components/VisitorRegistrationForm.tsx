@@ -65,9 +65,9 @@ const VisitorRegistrationForm = () => {
     // }
 
     if (!formData.name) newErrors.name = "Name required";
-    // if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-    //   newErrors.email = "Invalid email address";
-    // }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Invalid email address";
+    }
     if (!/^[6-9]\d{9}$/.test(formData.phone)) {
       newErrors.phone = "Enter valid 10-digit mobile number";
     }
@@ -182,6 +182,11 @@ const VisitorRegistrationForm = () => {
       });
 
       setShowOTPPopup(false);
+      await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/final", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visitorId: visitorId }),
+      });
       navigate('/thank-you')
     } catch (err) {
       setOtpError("Something went wrong. Please try again.");
@@ -219,7 +224,7 @@ const VisitorRegistrationForm = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email
+                    Email *
                   </label>
                   <input
                     type="email"
@@ -490,7 +495,7 @@ const VisitorRegistrationForm = () => {
                       errors.projectDuration ? "ring-2 ring-red-400 rounded-xl p-2" : ""
                     }`}
                   >
-                    {["Immediate", "With In 2 Months", "With In 3 Months"].map((config) => (
+                    {["Immediate", "Within 2 Months", "Within 3 Months"].map((config) => (
                       <label
                         key={config}
                         className={`border-2 rounded-xl p-6 text-center cursor-pointer transition-all

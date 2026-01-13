@@ -9,7 +9,7 @@ import ThankYou from "./components/thankyou";
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/visitor-management">
       <Routes>
         <Route path="/" element={<Client />} />
         <Route path="/thank-you" element={<ThankYou />} />
@@ -43,7 +43,7 @@ export default function App() {
           }
         />
 
-        <Route path="*" element={<VisitorLogin />} />
+        <Route path="*" element={<Client />} />
       </Routes>
     </BrowserRouter>
   );
