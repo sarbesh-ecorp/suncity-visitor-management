@@ -548,7 +548,7 @@ const VisitorRegistrationForm = () => {
           </AnimatePresence>
 
           <div className="mt-12 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex justify-end gap-4">
+            <div className="flex justify-center gap-4 sm:justify-end">
               <button
                 type="submit"
                 disabled={loading}
