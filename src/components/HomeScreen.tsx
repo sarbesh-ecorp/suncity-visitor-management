@@ -1,6 +1,23 @@
 import { Plus, FileText, Users, Building2, ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const HomeScreen = ({ goToForm }: {goToForm: any}) => {
+  const [page, setPage] = useState(1);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/number");
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        setPage(data.total);
+      } catch (err) {
+        console.error("Failed to load count:", err);
+      }
+    };
+    load();
+  }, []);
+
   return (
     <div className="homebanner relative overflow-hidden flex items-center justify-center" style={{background: 'url(/visitor-management/bg.webp) center/cover no-repeat'}}>
       <div className="relative z-10 max-w-6xl w-full text-center space-y-16">
@@ -23,9 +40,9 @@ const HomeScreen = ({ goToForm }: {goToForm: any}) => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-20">
           {[
-            { icon: FileText, label: "People Visited", value: "1512", color: "from-brown to-brown-600" },
+            { icon: FileText, label: "People Visited", value: 1565 + page, color: "from-brown to-brown-600" },
             { icon: Users, label: "Total Channel Partner Registered", value: "1500+", color: "from-brown to-brown-600" },
-            { icon: Building2, label: "EOI Submitted", value: "1542", color: "from-brown to-brown-600" },
+            { icon: Building2, label: "EOI Submitted", value: 1512 + page, color: "from-brown to-brown-600" },
           ].map((stat, i) => (
             <div
               key={i}

@@ -17,7 +17,7 @@ import {
 
 interface Visitor {
   id: number;
-  referral: "direct" | "broker";
+  referral: "direct" | "Channel Partner";
   brokerName?: string;
   brokerPhone?: string;
   brokerId?: string;
@@ -260,7 +260,7 @@ export default function VisitorUsersList() {
                         </td>
                         <td className="px-6 py-5 hidden sm:table-cell">
                           <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-blue-950 text-blue-300 border border-blue-900/50">
-                            {user.referral === 'broker' ? 'Channel Partner' : user.referral}
+                            {user.referral}
                           </span>
                         </td>
                         <td className="px-6 py-5 text-right">
@@ -352,7 +352,7 @@ export default function VisitorUsersList() {
                   <div>
                     <h3 className="text-lg font-semibold text-blue-400 mb-4">Referral & Project</h3>
                     <div className="space-y-4 text-sm">
-                      <DetailRow label="Referral Type" value={selectedUser.referral === 'broker' ? 'Channel Partner' : selectedUser.referral} />
+                      <DetailRow label="Referral Type" value={selectedUser.referral} />
                       <DetailRow label="Direct Source" value={selectedUser.directSource || "—"} />
                       <DetailRow label="Source Details" value={selectedUser.directSourceOthers || "—"} />
                       <DetailRow label="Channel Partner Name" value={selectedUser.brokerName || "—"} />

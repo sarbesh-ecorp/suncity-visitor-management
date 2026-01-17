@@ -50,7 +50,7 @@ const VisitorRegistrationForm = () => {
   const validateStep = (): boolean => {
     const newErrors: { [key: string]: string } = {};
 
-    if (formData.referral === "broker") {
+    if (formData.referral === "Channel Partner") {
       if (!formData.brokerName) newErrors.brokerName = "Channel Partner name required";
       if (formData.brokerPhone.length !== 10) newErrors.brokerPhone = "Channel Partner phone required";
       if (!formData.brokerId) newErrors.brokerId = "Channel Partner company name required";
@@ -330,7 +330,7 @@ const VisitorRegistrationForm = () => {
               </div>
               <h3 className="text-2xl font-bold text-gray-800">How did you hear about us?</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {["direct", "broker"].map((opt) => (
+                {["direct", "Channel Partner"].map((opt) => (
                   <label
                     key={opt}
                     className={`border-2 rounded-xl p-6 text-center cursor-pointer transition-all ${
@@ -351,7 +351,7 @@ const VisitorRegistrationForm = () => {
                     }`}
                     />
                     <span className="text-lg font-medium capitalize">
-                      {opt === "direct" ? "Direct" : opt === "broker" ? "Channel Partner" : ""}
+                      {opt === "direct" ? "Direct" : opt === "Channel Partner" ? "Channel Partner" : ""}
                     </span>
                   </label>
                 ))}
@@ -407,7 +407,7 @@ const VisitorRegistrationForm = () => {
                 </div>
               )}
 
-              {formData.referral === "broker" && (
+              {formData.referral === "Channel Partner" && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Channel Partner Name *</label>
