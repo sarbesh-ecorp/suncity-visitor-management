@@ -108,13 +108,13 @@ export default function VisitorUsersList() {
       "Referral",
       "Direct Source",
       "Direct Source Others",
-      "Broker Name",
-      "Broker Phone",
-      "Broker Company",
+      "Channel Partner Name",
+      "Channel Partner Phone",
+      "Channel Partner Company",
       "City",
       "City Other",
       "Pincode",
-      "Project Config",
+      "Project Configuration",
       "Project Duration",
       "OTP Verified",
       "IP",
@@ -171,7 +171,7 @@ export default function VisitorUsersList() {
               <ArrowLeft size={20} />
             </button>
             <div>
-              <h1 className="text-3xl font-semibold text-white">Registered Visitors</h1>
+              <h1 className="text-3xl font-semibold text-white">Registered Visitors ({users.length})</h1>
               <p className="text-slate-400 mt-1">View and manage visitor submissions</p>
             </div>
           </div>
@@ -355,10 +355,10 @@ export default function VisitorUsersList() {
                       <DetailRow label="Referral Type" value={selectedUser.referral} />
                       <DetailRow label="Direct Source" value={selectedUser.directSource || "—"} />
                       <DetailRow label="Source Details" value={selectedUser.directSourceOthers || "—"} />
-                      <DetailRow label="Broker Name" value={selectedUser.brokerName || "—"} />
-                      <DetailRow label="Broker Phone" value={selectedUser.brokerPhone || "—"} />
-                      <DetailRow label="Broker Company/ID" value={selectedUser.brokerId || "—"} />
-                      <DetailRow label="Project Config" value={selectedUser.projectConfig || "—"} />
+                      <DetailRow label="Channel Partner Name" value={selectedUser.brokerName || "—"} />
+                      <DetailRow label="Channel Partner Phone" value={selectedUser.brokerPhone || "—"} />
+                      <DetailRow label="Channel Partner Company/ID" value={selectedUser.brokerId || "—"} />
+                      <DetailRow label="Project Configuration" value={selectedUser.projectConfig || "—"} />
                       <DetailRow label="Booking Timeline" value={selectedUser.projectDuration || "—"} />
                     </div>
                   </div>
