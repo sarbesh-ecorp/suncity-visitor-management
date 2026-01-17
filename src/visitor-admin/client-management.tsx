@@ -352,7 +352,7 @@ export default function VisitorUsersList() {
                   <div>
                     <h3 className="text-lg font-semibold text-blue-400 mb-4">Referral & Project</h3>
                     <div className="space-y-4 text-sm">
-                      <DetailRow label="Referral Type" value={selectedUser.referral} />
+                      <DetailRow label="Referral Type" value={selectedUser.referral === 'broker' ? 'Channel Partner' : selectedUser.referral} />
                       <DetailRow label="Direct Source" value={selectedUser.directSource || "—"} />
                       <DetailRow label="Source Details" value={selectedUser.directSourceOthers || "—"} />
                       <DetailRow label="Channel Partner Name" value={selectedUser.brokerName || "—"} />
