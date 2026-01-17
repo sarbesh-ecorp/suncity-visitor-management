@@ -260,7 +260,7 @@ export default function VisitorUsersList() {
                         </td>
                         <td className="px-6 py-5 hidden sm:table-cell">
                           <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-blue-950 text-blue-300 border border-blue-900/50">
-                            {user.referral}
+                            {user.referral === 'broker' ? 'Channel Partner' : user.referral}
                           </span>
                         </td>
                         <td className="px-6 py-5 text-right">
