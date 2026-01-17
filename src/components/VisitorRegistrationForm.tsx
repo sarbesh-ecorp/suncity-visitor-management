@@ -53,7 +53,11 @@ const VisitorRegistrationForm = () => {
     if (formData.referral === "broker") {
       if (!formData.brokerName) newErrors.brokerName = "Channel Partner name required";
       if (formData.brokerPhone.length !== 10) newErrors.brokerPhone = "Channel Partner phone required";
-      if (formData.brokerId) newErrors.brokerId = "Channel Partner company name required";
+      if (!formData.brokerId) newErrors.brokerId = "Channel Partner company name required";
+    }
+
+    if (!formData.referral) {
+      if (!formData.referral) newErrors.referral = "Please select a source";
     }
 
     // if (formData.referral === "direct") {
@@ -341,7 +345,10 @@ const VisitorRegistrationForm = () => {
                       value={opt}
                       checked={formData.referral === opt}
                       onChange={handleChange}
-                      className="sr-only"
+                      // className="sr-only"
+                      className={`sr-only w-full rounded-lg border px-4 py-3 ${
+                      errors.referral ? "border-red-500" : "border-gray-300"
+                    }`}
                     />
                     <span className="text-lg font-medium capitalize">
                       {opt === "direct" ? "Direct" : opt === "broker" ? "Channel Partner" : ""}
@@ -352,6 +359,7 @@ const VisitorRegistrationForm = () => {
               {errors.referral && (
                 <p className="text-red-500 text-sm mt-2 font-medium">{errors.referral}</p>
               )}
+              
 
               {formData.referral === "direct" && (
                 <div className="mt-6 max-w-md">
