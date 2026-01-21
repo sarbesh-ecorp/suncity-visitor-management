@@ -278,7 +278,7 @@ const VisitorRegistrationForm = () => {
                     <option value="">Select an option</option>
                     <option value="East Delhi">East Delhi</option>
                     <option value="West Delhi">West Delhi</option>
-                    <option value="Soth Delhi">South Delhi</option>
+                    <option value="South Delhi">South Delhi</option>
                     <option value="North Delhi">North Delhi</option>
                     <option value="Gurugram">Gurugram</option>
                     <option value="Faridabad">Faridabad</option>
