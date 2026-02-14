@@ -1,45 +1,29 @@
 import { useEffect, useState } from "react";
-import { AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import ChannelPartnerPopup from "./channelPartnerPopup";
+
+type Partner = {
+  id: string;
+  name: string;
+  phone: string;
+  company: string;
+};
 
 const VisitorRegistrationForm = () => {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [showOTPPopup, setShowOTPPopup] = useState(false);
+  const [visitorId, setPartnerId] = useState<number | null>(null);
+  const [showOTP, setShowOTP] = useState(false);
   const [otp, setOtp] = useState("");
   const [otpError, setOtpError] = useState("");
-  const [visitorId, setVisitorId] = useState<number | null>(null);
-  const [ip, setIp] = useState("Fetching...");
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isEditingPhone, setIsEditingPhone] = useState(false);
-
-  const [formData, setFormData] = useState({
-    referral: "",
-    directSource: '',
-    directSourceOthers: '',
-    brokerName: "",
-    brokerPhone: "",
-    brokerId: "",
-    name: "",
-    email: "",
-    phone: "",
-    city: "",
-    cityOther: "",
-    pincode: "",
-    projectConfig: "",
-    projectDuration: '',
-    notes: "",
-  });
-
-  const handleChange = (e: { target: { name: any; value: any; }; }) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
+  const [partnerResults, setPartnerResults] = useState<Partner[]>([]);
+  const [searchingPartner, setSearchingPartner] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [partners, setPartners] = useState<Partner[]>([]);
+  const [ip, setIp] = useState("Fetching...");
+  const [showPartnerPopup, setShowPartnerPopup] = useState(false);
+  
   useEffect(() => {
     fetch("https://api.ipify.org?format=json")
       .then((r) => r.json())
@@ -47,49 +31,149 @@ const VisitorRegistrationForm = () => {
       .catch(() => setIp("Unable to fetch"));
   }, []);
 
-  const validateStep = (): boolean => {
-    const newErrors: { [key: string]: string } = {};
+  useEffect(() => {
+    const fetchPartners = async () => {
+      try {
+        const res = await fetch(
+          "https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/channel-partner"
+        );
+        const data = await res.json();
+        setPartners(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to fetch channel partners:", err);
+        setPartners([]);
+      }
+    };
 
-    if (formData.referral === "Channel Partner") {
-      if (!formData.brokerName) newErrors.brokerName = "Channel Partner name required";
-      if (formData.brokerPhone.length !== 10) newErrors.brokerPhone = "Channel Partner phone required";
-      if (!formData.brokerId) newErrors.brokerId = "Channel Partner company name required";
+    fetchPartners();
+  }, []);
+
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    source: "",
+
+    directSource: "",
+    directSourceOther: "",
+
+    channelPartnerId: "",
+    channelPartnerName: "",
+    channelPartnerPhone: "",
+    channelPartnerCompany: "",
+
+    clientName: "",
+    clientEmail: "",
+    clientPhone: "",
+    clientLocation: "",
+    cityOther: "",
+    clientAadharLast4: "",
+    configuration: "",
+    projectDuration: "",
+    notes: "",
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  useEffect(() => {
+    if (formData.source !== "channel-partner") {
+      setFormData((prev) => ({
+        ...prev,
+        channelPartnerId: "",
+        channelPartnerName: "",
+        channelPartnerPhone: "",
+        channelPartnerCompany: "",
+      }));
+      setPartnerResults([]);
+    }
+  }, [formData.source]);
+
+  const searchPartner = (query: string) => {
+    if (query.length < 4) {
+      setPartnerResults([]);
+      return;
     }
 
-    if (!formData.referral) {
-      if (!formData.referral) newErrors.referral = "Please select a source";
+    setSearchingPartner(true);
+
+    const q = query.toLowerCase();
+
+    const filtered = partners.filter((p) => {
+      const phone = String(p.phone);
+      const name = p.name?.toLowerCase() || "";
+
+      return phone.includes(q) || name.includes(q);
+    });
+
+    setPartnerResults(filtered);
+    setSearchingPartner(false);
+  };
+
+  const selectPartner = (partner: Partner) => {
+    setFormData((prev) => ({
+      ...prev,
+      channelPartnerId: partner.id,
+      channelPartnerName: partner.name,
+      channelPartnerPhone: partner.phone,
+      channelPartnerCompany: partner.company,
+    }));
+    setPartnerResults([]);
+  };
+
+  const validate = () => {
+    const err: Record<string, string> = {};
+
+    if (!formData.source) {
+      err.source = "Please select how you heard about us";
     }
 
-    // if (formData.referral === "direct") {
-    //   if (!formData.directSource) newErrors.directSource = "Please select or enter a source";
-    // }
-
-    // if (formData.referral === "direct" && formData.directSource === "others") {
-    //   if (!formData.directSourceOthers) newErrors.directSourceOthers = "Please enter a source";
-    // }
-
-    if (!formData.name) newErrors.name = "Name required";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Invalid email address";
+    if (formData.source === "channel-partner") {
+      if (!formData.channelPartnerId) {
+        err.channelPartner = "Please select a channel partner";
+      }
     }
-    if (!/^[6-9]\d{9}$/.test(formData.phone)) {
-      newErrors.phone = "Enter valid 10-digit mobile number";
+
+    if (formData.source === "direct") {
+      if (!formData.directSource) {
+        err.directSource = "Please select source of enquiry";
+      }
+
+      if (
+        formData.directSource === "Others" &&
+        !formData.directSourceOther.trim()
+      ) {
+        err.directSourceOther = "Please specify the source";
+      }
     }
-    // if (!formData.city) newErrors.city = "City required";
-    // if (formData.city === 'others' && !formData.cityOther) newErrors.cityOther = "City required";
-    // if (formData.pincode.length !== 6) newErrors.pincode = "Pincode required";
 
-    // if (!formData.projectConfig) newErrors.projectConfig = "Please select a configuration";
+    if (formData.clientEmail && !/^\S+@\S+\.\S+$/.test(formData.clientEmail)) {
+      err.clientEmail = "Enter a valid email";
+    }
 
-    // if (!formData.projectDuration) newErrors.projectDuration = "Please select a delivey time";
+    if (!formData.clientName.trim()) {
+      err.clientName = "Client name is required";
+    }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (formData.source === "direct" && !/^[6-9]\d{9}$/.test(formData.clientPhone)) {
+      err.clientPhone = "Enter a valid 10-digit phone number";
+    }
+
+    if (formData.source === "channel-partner" && !/^[0-9]\d{3}$/.test(formData.clientPhone)) {
+      err.clientPhone = "Enter a valid last 4-digit phone number";
+    }
+
+    setErrors(err);
+    return Object.keys(err).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateStep()) return;
+    if (!validate()) return;
 
     setLoading(true);
 
@@ -97,181 +181,250 @@ const VisitorRegistrationForm = () => {
       let currentVisitorId = visitorId;
 
       if (!visitorId) {
-        const res = await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/registration", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        });
+        const res = await fetch(
+          "https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/new-visitor/registration",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(formData),
+          }
+        );
+
+        if (!res.ok) throw new Error("Registration failed");
 
         const data = await res.json();
+        if (!data.visitorId) throw new Error("Visitor ID missing");
+
         currentVisitorId = data.visitorId;
-        setVisitorId(currentVisitorId);
+        setPartnerId(currentVisitorId);
 
-        await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/submit", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ visitorId: currentVisitorId, ip }),
-        });
+        const submitRes = await fetch(
+          "https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/new-visitor/submit",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ visitorId: currentVisitorId, ip }),
+          }
+        );
+
+        if (!submitRes.ok) throw new Error("Submit failed");
       } else {
-        await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/update-phone", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            visitorId,
-            phone: formData.phone,
-          }),
-        });
+        const updateRes = await fetch(
+          "https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/new-visitor/update-phone",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              visitorId,
+              clientPhone: formData.clientPhone,
+            }),
+          }
+        );
+
+        if (!updateRes.ok) throw new Error("Phone update failed");
       }
+      if (formData.source !== "channel-partner") {
+        const otpRes = await fetch(
+          "https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/new-visitor/send-otp",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ visitorId: currentVisitorId }),
+          }
+        );
 
-      await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/send-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visitorId: currentVisitorId }),
-      });
+        if (!otpRes.ok) throw new Error("OTP send failed");
 
-      setIsEditingPhone(false);
-      setShowOTPPopup(true);
+        setIsEditingPhone(false);
+        setShowOTP(true);
+      } else {
+        navigate("/thank-you");
+      }
     } catch (err) {
       console.error(err);
-      alert("Something went wrong");
+      alert("Form submission failed. Please try again.");
+      setShowOTP(false);
     } finally {
       setLoading(false);
     }
   };
 
   const handleOtpSubmit = async () => {
-    if (otp.length !== 4) {
-      setOtpError("Please enter a valid 4-digit OTP");
+    if (otp.length !== 4 || !visitorId) {
+      setOtpError("Enter valid OTP");
       return;
     }
 
     try {
       setLoading(true);
-      setOtpError("");
-      const res = await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/verify-otp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          visitorId: visitorId,
-          otp: otp,
-        }),
-      });
-      const data = await res.json();
+      const res = await fetch(
+        "https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/new-visitor/verify-otp",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ visitorId, otp }),
+        }
+      );
 
-      if (!res.ok) {
-        setOtpError(data.message || "Invalid OTP");
-        setOtp("")
-        return;
-      }
-
-      setVisitorId(null);
-      setFormData({
-        referral: "",
-        directSource: '',
-        directSourceOthers: '',
-        brokerName: "",
-        brokerPhone: "",
-        brokerId: "",
-        name: "",
-        email: "",
-        phone: "",
-        city: "",
-        cityOther: "",
-        pincode: "",
-        projectConfig: "",
-        projectDuration: '',
-        notes: "",
-      });
-
-      setShowOTPPopup(false);
-      await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor/final", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visitorId: visitorId }),
-      });
-      navigate('/thank-you')
-    } catch (err) {
-      setOtpError("Something went wrong. Please try again.");
+      if (!res.ok) throw new Error();
+      navigate("/thank-you");
+    } catch {
+      setOtpError("Invalid OTP");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
-      <div className="max-w-6xl mx-auto">
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-[5px] p-8 md:p-12">
-          <AnimatePresence mode="wait">
-            <div className="space-y-8">
-              <h3 className="text-2xl font-bold text-gray-800">Personal Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className={`w-full rounded-lg border px-4 py-3 ${
-                      errors.name ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                  {errors.name && (
-                    <p className="text-red-500 text-sm mt-2 font-medium">
-                      {errors.name}
-                    </p>
-                  )}
+    <div className="min-h-screen bg-gray-50 py-10 px-4 sm:px-6 lg:px-8">
+      <form
+        onSubmit={handleSubmit}
+        className="max-w-6xl mx-auto bg-white rounded-2xl shadow-xl p-8 md:p-10 space-y-10 border border-gray-100"
+      >
+        <h1 className="text-3xl md:text-4xl font-bold text-gray-800 text-center">
+          Visitor Registration
+        </h1>
+        <div className="space-y-4">
+          <label className="block text-lg font-semibold text-gray-700">
+            How did you hear about us?
+          </label>
+          <div className="flex flex-wrap gap-4">
+            {["channel-partner", "direct"].map((opt) => (
+              <label
+                key={opt}
+                className={`flex-1 min-w-[140px] border-2 rounded-xl px-6 py-5 text-center cursor-pointer transition-all
+                  ${
+                    formData.source === opt
+                      ? "border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm"
+                      : "border-gray-300 hover:border-gray-400"
+                  }`}
+              >
+                <input
+                  type="radio"
+                  name="source"
+                  value={opt}
+                  checked={formData.source === opt}
+                  onChange={handleChange}
+                  className="hidden"
+                />                
+                <div className="font-medium">
+                  {opt === "channel-partner" ? "Through Channel Partner" : "Direct Enquiry"}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className={`w-full rounded-lg border px-4 py-3 ${
-                      errors.email ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                  {errors.email && (
-                    <p className="text-red-500 text-sm mt-2 font-medium">
-                      {errors.email}
-                    </p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone *
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className={`w-full rounded-lg border px-4 py-3 ${
-                      errors.phone ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />
-                  {errors.phone && (
-                    <p className="text-red-500 text-sm mt-2 font-medium">
-                      {errors.phone}
-                    </p>
-                  )}
-                </div>                  
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+              </label>
+            ))}            
+          </div>
+          {errors.source && (
+            <p className="text-red-600 text-sm mt-2">{errors.source}</p>
+          )}
+        </div>
+
+        <AnimatePresence>
+          {formData.source === "direct" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-5"
+            >
+              <div className="space-y-6 pt-4 border-t border-gray-200">
+                <label className="block text-sm font-medium text-gray-700">
+                  Source of Enquiry
+                </label>
+                <select
+                  name="directSource"
+                  value={formData.directSource}
+                  onChange={handleChange}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 border-gray-300"
+                >
+                  <option value="">Select source</option>
+                  <option value="Newspaper">Newspaper</option>
+                  <option value="Digital">Digital / Online</option>
+                  <option value="Hoarding">Hoarding / Billboard</option>
+                  <option value="Reference">Reference</option>
+                  <option value="Others">Others</option>
+                </select>
+                {errors.directSource && (
+                  <p className="text-red-600 text-sm">{errors.directSource}</p>
+                )}
+              </div>
+
+              {formData.directSource === "Others" && (
+                <>
+                <input
+                  name="directSourceOther"
+                  placeholder="Please specify..."
+                  value={formData.directSourceOther}
+                  onChange={handleChange}
+                  className={`w-full rounded-lg border px-4 py-3
+                    ${errors.directSourceOther ? "border-red-500" : "border-gray-300"}
+                  `}
+                />
+                {errors.directSourceOther && (
+                  <p className="text-red-600 text-sm">{errors.directSourceOther}</p>
+                )}
+                </>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {formData.source && (
+          <div className="space-y-6 pt-4 border-t border-gray-200">
+            <h3 className="text-xl font-semibold text-gray-800">Client Details</h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Full Name *</label>
+                <input
+                  name="clientName"
+                  placeholder="Enter full name"
+                  value={formData.clientName}
+                  onChange={handleChange}
+                  className={`w-full rounded-lg border px-4 py-3
+                    ${errors.clientName ? "border-red-500" : "border-gray-300"}
+                  `}
+                />
+                {errors.clientName && (
+                  <p className="text-red-600 text-sm">{errors.clientName}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                  type="email"
+                  name="clientEmail"
+                  placeholder="example@email.com"
+                  value={formData.clientEmail}
+                  onChange={handleChange}
+                  className={`w-full rounded-lg border px-4 py-3 border-gray-300`}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">Phone *</label>
+                <input
+                  type="tel"
+                  name="clientPhone"
+                  placeholder={formData.source === 'channel-partner' ? "Last 4 digit" : "10-digit mobile number"}
+                  value={formData.clientPhone}
+                  onChange={handleChange}
+                  className={`w-full rounded-lg border px-4 py-3
+                    ${errors.clientPhone ? "border-red-500" : "border-gray-300"}
+                  `}
+                />
+                {errors.clientPhone && (
+                  <p className="text-red-600 text-sm">{errors.clientPhone}</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
                     Select Your city
                   </label>
 
                   <select
-                    name="city"
-                    value={formData.city}
+                    name="clientLocation"
+                    value={formData.clientLocation}
                     onChange={handleChange}
                     className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 shadow-sm focus:border-suncity-brown focus:ring-2 focus:ring-indigo-200 focus:outline-none"
                   >
@@ -287,13 +440,13 @@ const VisitorRegistrationForm = () => {
                     <option value="others">Others</option>
                   </select>
 
-                  {errors.city && (
+                  {errors.clientLocation && (
                     <p className="text-red-500 text-sm mt-2 font-medium">
-                      {errors.city}
+                      {errors.clientLocation}
                     </p>
                   )}
 
-                  {formData.city === "others" && (
+                  {formData.clientLocation === "others" && (
                     <div className="mt-4">
                       <input
                         type="text"
@@ -310,187 +463,154 @@ const VisitorRegistrationForm = () => {
                     </p>
                   )}
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Pincode
-                  </label>
-                  <input
-                    type="text"
-                    name="pincode"
-                    value={formData.pincode}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3"
-                  />
-                  {errors.pincode && (
-                    <p className="text-red-500 text-sm mt-2 font-medium">
-                      {errors.pincode}
-                    </p>
-                  )}
-                </div>                  
-              </div>
-              <h3 className="text-2xl font-bold text-gray-800">How did you hear about us?</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {["direct", "Channel Partner"].map((opt) => (
-                  <label
-                    key={opt}
-                    className={`border-2 rounded-xl p-6 text-center cursor-pointer transition-all ${
-                      formData.referral === opt
-                        ? "border-suncity-brown"
-                        : "border-gray-300 hover:border-gray-400"
-                    }`}
-                  >
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Aadhaar Last 4 Digits (optional)
+              </label>
+              <input
+                name="clientAadharLast4"
+                maxLength={4}
+                placeholder="XXXX"
+                value={formData.clientAadharLast4}
+                onChange={(e) => {
+                  if (/^\d{0,4}$/.test(e.target.value)) handleChange(e);
+                }}
+                className="w-full md:w-1/3 rounded-lg border px-4 py-3 border-gray-300"
+              />
+            </div>
+
+            <AnimatePresence>
+              {formData.source === "channel-partner" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-6 pt-4 border-t border-gray-200 overflow-hidden"
+                >
+                  <h3 className="text-xl font-semibold text-gray-800">Channel Partner Details</h3>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Search Partner by Phone or Name <br/> (Enter atleast 4 characters)
+                    </label>
                     <input
-                      type="radio"
-                      name="referral"
-                      value={opt}
-                      checked={formData.referral === opt}
-                      onChange={handleChange}
-                      // className="sr-only"
-                      className={`sr-only w-full rounded-lg border px-4 py-3 ${
-                      errors.referral ? "border-red-500" : "border-gray-300"
-                    }`}
+                      type="tel"
+                      placeholder="e.g. 98765..."
+                      onChange={(e) => searchPartner(e.target.value.trim())}
+                      className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 border-gray-300 outline-none"
                     />
-                    <span className="text-lg font-medium capitalize">
-                      {opt === "direct" ? "Direct" : opt === "Channel Partner" ? "Channel Partner" : ""}
-                    </span>
-                  </label>
-                ))}
-              </div>
-              {errors.referral && (
-                <p className="text-red-500 text-sm mt-2 font-medium">{errors.referral}</p>
-              )}
-              
+                    {errors.channelPartner && (
+                      <p className="text-red-600 text-sm">{errors.channelPartner}</p>
+                    )}
+                  </div>
 
-              {formData.referral === "direct" && (
-                <div className="mt-6 max-w-md">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    How did you hear about us?
-                  </label>
-
-                  <select
-                    name="directSource"
-                    value={formData.directSource}
-                    onChange={handleChange}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 shadow-sm focus:border-suncity-brown focus:ring-2 focus:ring-indigo-200 focus:outline-none"
-                  >
-                    <option value="">Select an option</option>
-                    <option value="Newspaper Ads">Newspaper Ads</option>
-                    <option value="Digital">Digital</option>
-                    <option value="Hoarding">Hoarding</option>
-                    <option value="Reference">Reference</option>
-                    <option value="others">Others</option>
-                  </select>
-
-                  {errors.directSource && (
-                    <p className="text-red-500 text-sm mt-2 font-medium">
-                      {errors.directSource}
-                    </p>
+                  {searchingPartner && (
+                    <p className="text-indigo-600 animate-pulse">Searching partners...</p>
                   )}
 
-                  {formData.directSource === "others" && (
-                    <div className="mt-4">
-                      <input
-                        type="text"
-                        name="directSourceOthers"
-                        placeholder="Please specify"
-                        onChange={handleChange}
-                        className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-800 focus:border-suncity-brown focus:ring-2 focus:ring-indigo-200 focus:outline-none"
-                      />
+                  {partnerResults.length === 0 && formData.source === "channel-partner" && (
+                    <div className="border border-dashed border-indigo-400 rounded-lg p-5 bg-indigo-50 text-center space-y-3">
+                      <p className="text-sm text-indigo-700 font-medium">
+                        No channel partner found
+                      </p>
+
+                      <button
+                    type="button"
+                    onClick={() => setShowPartnerPopup(true)}
+                    className="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700"
+                  >
+                    + Add New Channel Partner
+                  </button>
+
                     </div>
                   )}
 
-                  {errors.directSourceOthers && (
-                    <p className="text-red-500 text-sm mt-2 font-medium">
-                      {errors.directSourceOthers}
-                    </p>
+                  {partnerResults.length > 0 && (
+                    <div className="border border-gray-200 rounded-lg max-h-60 overflow-y-auto divide-y divide-gray-100 bg-gray-50">
+                      {partnerResults.map((p) => (
+                        <div
+                          key={p.id}
+                          onClick={() => selectPartner(p)}
+                          className="px-4 py-3 hover:bg-indigo-50 cursor-pointer transition-colors flex justify-between items-center"
+                        >
+                          <div>
+                            <div className="font-medium">{p.name}</div>
+                            <div className="text-sm text-gray-600">{p.phone}</div>
+                          </div>
+                          <div className="text-sm text-gray-500 italic">{p.company}</div>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                </div>
-              )}
 
-              {formData.referral === "Channel Partner" && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Channel Partner Name *</label>
-                    <input
-                      type="text"
-                      name="brokerName"
-                      placeholder="Channel Partner Name"
-                      value={formData.brokerName}
-                      onChange={handleChange}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 placeholder-gray-400 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-suncity-brown focus:ring-2 focus:ring-indigo-200 focus:outline-none"
-                      required
-                    />                        
-                    {errors.brokerName && (
-                      <p className="text-red-500 text-sm mt-2 font-medium">{errors.brokerName}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Channel Partner Phone Number *</label>
-                    <input
-                      type="tel"
-                      name="brokerPhone"
-                      placeholder="Channel Partner Phone"
-                      value={formData.brokerPhone}
-                      onChange={handleChange}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 placeholder-gray-400 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-suncity-brown focus:ring-2 focus:ring-indigo-200 focus:outline-none"
-                      required
-                    />
-                    {errors.brokerPhone && (
-                      <p className="text-red-500 text-sm mt-2 font-medium">{errors.brokerPhone}</p>
-                    )}
-                  </div>                      
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Channel Partner Company *</label>
-                    <input
-                      type="text"
-                      name="brokerId"
-                      placeholder="Channel Partner Company"
-                      value={formData.brokerId}
-                      onChange={handleChange}
-                      className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-800 placeholder-gray-400 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-suncity-brown focus:ring-2 focus:ring-indigo-200 focus:outline-none"
-                    />
-                  </div>
-                </div>
-              )}
-              <div className="space-y-8">
-                <div>
-                  <p className="font-medium mb-4">
-                    Configuration Interested In <span className="text-red-500"></span>
-                  </p>
-                  <div
-                    className={`grid grid-cols-1 md:grid-cols-3 gap-6 ${
-                      errors.projectConfig ? "ring-2 ring-red-400 rounded-xl p-2" : ""
-                    }`}
-                  >
-                    {["3 BHK", "4 BHK", "Both"].map((config) => (
-                      <label
-                        key={config}
-                        className={`border-2 rounded-xl p-6 text-center cursor-pointer transition-all
-                          ${
-                            formData.projectConfig === config
-                              ? "border-indigo-600 bg-indigo-50"
-                              : errors.projectConfig
-                              ? "border-red-400"
-                              : "border-gray-300 hover:border-gray-400"
-                          }`}
-                      >
-                        <input
-                          type="radio"
-                          name="projectConfig"
-                          value={config}
-                          checked={formData.projectConfig === config}
-                          onChange={handleChange}
-                          className="sr-only"
-                        />
-                        <span className="text-lg font-medium">{config}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {errors.projectConfig && (
-                    <p className="mt-3 text-sm font-medium text-red-600">
-                      {errors.projectConfig}
-                    </p>
+                  {formData.channelPartnerId && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-5 space-y-4">
+                      <p className="text-sm font-medium text-green-800">Selected Partner</p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                        <div>
+                          <span className="text-gray-600">Name</span>
+                          <div className="font-medium">{formData.channelPartnerName}</div>
+                        </div>
+
+                        <div>
+                          <span className="text-gray-600">Phone</span>
+                          <div className="font-medium">{formData.channelPartnerPhone}</div>
+                        </div>
+
+                        <div>
+                          <label className="text-gray-600 block mb-1">
+                            Company (editable)
+                          </label>
+                          <input
+                            type="text"
+                            name="channelPartnerCompany"
+                            value={formData.channelPartnerCompany}
+                            onChange={handleChange}
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                            placeholder="Enter company name"
+                          />
+                        </div>
+                      </div>
+                    </div>
                   )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="space-y-8 pt-4 border-t border-gray-200">
+              <div>
+                <p className="font-medium mb-4">
+                  Configuration Interested In <span className="text-red-500"></span>
+                </p>
+                <div
+                  className={`grid grid-cols-1 md:grid-cols-3 gap-6`}
+                >
+                  {["3 BHK", "4 BHK", "Both"].map((config) => (
+                    <label
+                      key={config}
+                      className={`border-2 rounded-xl p-6 text-center cursor-pointer transition-all
+                        ${
+                          formData.configuration === config
+                            ? "border-indigo-600 bg-indigo-50"
+                            : errors.configuration
+                            ? "border-red-400"
+                            : "border-gray-300 hover:border-gray-400"
+                        }`}
+                    >
+                      <input
+                        type="radio"
+                        name="configuration"
+                        value={config}
+                        checked={formData.configuration === config}
+                        onChange={handleChange}
+                        className="sr-only"
+                      />
+                      <span className="text-lg font-medium">{config}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
               <div className="space-y-8">
@@ -534,28 +654,23 @@ const VisitorRegistrationForm = () => {
                   )}
                 </div>
               </div>
-
-              <div className="space-y-8">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Any Message for Us (Optional)
-                  </label>
-                  <textarea
-                    name="notes"
-                    rows={3}
-                    value={formData.notes}
-                    onChange={handleChange}
-                    className={`w-full rounded-lg border px-4 py-3 ${
-                      errors.notes ? "border-red-500" : "border-gray-300"
-                    }`}
-                  />                    
-                </div>
-              </div>
-
             </div>
-          </AnimatePresence>
 
-          <div className="mt-12 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Additional Notes</label>
+              <textarea
+                name="notes"
+                placeholder="Any remarks, preferences, follow-up details..."
+                value={formData.notes}
+                onChange={handleChange}
+                rows={3}
+                className="w-full rounded-lg border px-4 py-3 border-gray-300"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="mt-12 flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex justify-center gap-4 sm:justify-end">
               <button
                 type="submit"
@@ -591,76 +706,10 @@ const VisitorRegistrationForm = () => {
               </button>
             </div>
           </div>
-        </form>
-      </div>
-
-      {/* <AnimatePresence>
-        {showOTPPopup && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4"
-          >
-            <div className="bg-white rounded-3xl p-10 text-center shadow-2xl max-w-md w-full"
-            >
-              <div className="text-5xl mb-4"
-              >
-                🔐
-              </div>
-
-              <h2 className="text-2xl font-bold text-gray-800">Verify OTP</h2>
-              <p className="mt-2 text-gray-600">
-                Enter the 4-digit OTP sent to
-              </p>
-
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, phone: e.target.value }))
-                }
-                className="mt-4 w-full rounded-lg border border-gray-300 px-4 py-3 text-center font-semibold focus:border-suncity-brown focus:ring-2 focus:ring-indigo-200 focus:outline-none"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  setIsEditingPhone(true);
-                }}
-                className="mt-2 text-sm text-indigo-600 underline"
-              >
-                Edit phone number
-              </button>
-              <input
-                type="text"
-                maxLength={4}
-                value={otp}
-                onChange={(e) => {
-                  setOtp(e.target.value.replace(/\D/g, ""));
-                  setOtpError("");
-                }}
-                className="mt-6 w-full text-center tracking-widest text-2xl font-semibold rounded-xl border border-gray-300 px-4 py-3 focus:border-suncity-brown focus:ring-2 focus:ring-indigo-200 focus:outline-none"
-                placeholder="____"
-              />
-              {otpError && (
-                <p className="text-red-500 text-sm mt-3 font-medium">
-                  {otpError}
-                </p>
-              )}
-              <button
-                type="submit"
-                disabled={loading}
-                onClick={isEditingPhone ? handleSubmit : handleOtpSubmit}
-                className="px-10 py-3 bg-suncity-brown text-white rounded-lg"
-              >
-                {loading
-                  ? "Submitting..."
-                  : isEditingPhone
-                  ? "Update Phone & Resend OTP"
-                  : "Submit Registration"}
-              </button>
-            </div>
-          </div>
-        )}
-      </AnimatePresence> */}
+      </form>
+      {/* OTP MODAL */}
       <AnimatePresence>
-        {showOTPPopup && (
+        {showOTP && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -689,7 +738,7 @@ const VisitorRegistrationForm = () => {
               </p>
               <div className="mb-6">
                 <p className="text-xl font-semibold text-gray-800">
-                  {formData.phone || "+91 __________"}
+                  {formData.clientPhone || "+91 __________"}
                 </p>
                 <button
                   type="button"
@@ -704,9 +753,9 @@ const VisitorRegistrationForm = () => {
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   type="tel"
-                  value={formData.phone}
+                  value={formData.clientPhone}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, phone: e.target.value }))
+                    setFormData((prev) => ({ ...prev, clientPhone: e.target.value }))
                   }
                   className="mb-4 w-full rounded-xl border border-gray-300 px-5 py-4 text-center text-lg font-medium focus:border-suncity-brown focus:ring-4 focus:ring-indigo-100 focus:outline-none transition-all"
                   placeholder="Enter phone number"
@@ -781,6 +830,32 @@ const VisitorRegistrationForm = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ChannelPartnerPopup
+        isOpen={showPartnerPopup}
+        onClose={() => setShowPartnerPopup(false)}
+        onSuccess={(partner: Partner) => {
+          setPartners((prev) => [
+            ...prev,
+            {
+              id: partner.id,
+              name: partner.name,
+              phone: partner.phone,
+              company: partner.company,
+            },
+          ]);
+
+          setFormData((prev) => ({
+            ...prev,
+            channelPartnerId: partner.id,
+            channelPartnerName: partner.name,
+            channelPartnerPhone: partner.phone,
+            channelPartnerCompany: partner.company,
+          }));
+
+          setShowPartnerPopup(false);
+        }}
+      />
     </div>
   );
 };

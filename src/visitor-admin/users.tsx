@@ -23,6 +23,8 @@ interface Visitor {
 const allScreens = [
   { name: "Users", icon: Users },
   { name: "Client Management", icon: UserCheck },
+  { name: "Client Management (NEW)", icon: UserCheck },
+  { name: "Channel Partner Management", icon: UserCheck },
 ];
 
 export default function VisitorSystemUsers() {

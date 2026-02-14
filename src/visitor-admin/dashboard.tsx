@@ -23,7 +23,7 @@ export default function VisitorDashboard() {
     localStorage.removeItem("token");
     localStorage.removeItem("permissions");
     localStorage.removeItem("name");
-    navigate("/visitor-admin/login");
+    navigate("/visitor-login");
   };
 
   const allMenuItems = [
@@ -32,6 +32,18 @@ export default function VisitorDashboard() {
       icon: Users,
       path: "/visitor-admin/client-management",
       desc: "View and manage all clients",
+    },
+    {
+      title: "Client Management (NEW)",
+      icon: Users,
+      path: "/visitor-admin/new-client-management",
+      desc: "View and manage all clients",
+    },
+    {
+      title: "Channel Partner Management",
+      icon: Users,
+      path: "/visitor-admin/channel-partner-management",
+      desc: "View and manage all channel Partners",
     },
     {
       title: "Users",

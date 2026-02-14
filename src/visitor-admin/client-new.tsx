@@ -17,27 +17,28 @@ import {
 
 interface Visitor {
   id: number;
-  referral: "direct" | "Channel Partner";
-  brokerName?: string;
-  brokerPhone?: string;
-  brokerId?: string;
+  source: "direct" | "Channel Partner";
   directSource?: string;
-  directSourceOthers?: string;
-  name: string;
-  email: string;
-  phone: string;
-  city: string;
-  cityOther?: string;
-  pincode: string;
-  projectConfig?: string;
-  projectDuration?: string;
-  notes?: string;
+  directSourceOther?: string;
+  channelPartnerId: string,
+    channelPartnerName: string,
+    channelPartnerPhone: string,
+    channelPartnerCompany: string,
+    clientName: string,
+    clientEmail: string,
+    clientPhone: string,
+    clientLocation: string,
+    cityOther: string;
+    clientAadharLast4: string,
+    configuration: string,
+    notes: string,
+    projectDuration: string;
   ip?: string;
   otpVerified?: boolean;
   submittedAt?: string;
 }
 
-export default function VisitorUsersList() {
+export default function NewVisitorUsersList() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<Visitor[]>([]);
   const [selectedUser, setSelectedUser] = useState<Visitor | null>(null);
@@ -47,6 +48,8 @@ export default function VisitorUsersList() {
   const [exportType, setExportType] = useState<"today" | "date" | "all">("all");
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [editUser, setEditUser] = useState<Visitor | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const USERS_PER_PAGE = 12;
 
@@ -54,7 +57,7 @@ export default function VisitorUsersList() {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/visitor");
+        const res = await fetch("https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/new-visitor");
         if (!res.ok) throw new Error("Failed to fetch");
         const data = await res.json();
         setUsers(Array.isArray(data) ? data : []);
@@ -71,7 +74,7 @@ export default function VisitorUsersList() {
     if (!search.trim()) return users;
     const q = search.toLowerCase();
     return users.filter((u) =>
-      [u.name, u.email, u.phone, u.referral, u.brokerName]
+      [u.clientName, u.clientEmail, u.clientPhone, u.source, u.channelPartnerName]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q))
     );
@@ -107,7 +110,7 @@ export default function VisitorUsersList() {
       "Name",
       "Email",
       "Phone",
-      "Referral",
+      "Source",
       "Direct Source",
       "Direct Source Others",
       "Channel Partner Name",
@@ -115,9 +118,9 @@ export default function VisitorUsersList() {
       "Channel Partner Company",
       "City",
       "City Other",
-      "Pincode",
-      "Project Configuration",
       "Project Duration",
+      "Project Configuration",
+      
       "Notes",
       "OTP Verified",
       "IP",
@@ -127,20 +130,19 @@ export default function VisitorUsersList() {
     const rows = exportList.map((v) =>
       [
         v.id,
-        v.name,
-        v.email,
-        v.phone,
-        v.referral,
+        v.clientName,
+        v.clientEmail,
+        v.clientPhone,
+        v.source,
         v.directSource || "",
-        v.directSourceOthers || "",
-        v.brokerName || "",
-        v.brokerPhone || "",
-        v.brokerId || "",
-        v.city,
+        v.directSourceOther || "",
+        v.channelPartnerName || "",
+        v.channelPartnerPhone || "",
+        v.channelPartnerCompany || "",
+        v.clientLocation,
         v.cityOther || "",
-        v.pincode,
-        v.projectConfig || "",
-        v.projectDuration || "",
+        v.projectDuration,
+        v.configuration || "",
         v.notes || "",
         v.otpVerified ? "Yes" : "No",
         v.ip || "",
@@ -159,6 +161,36 @@ export default function VisitorUsersList() {
     document.body.removeChild(link);
 
     setExportModal(false);
+  };
+
+  const handleUpdateVisitor = async () => {
+    if (!editUser) return;
+
+    setSaving(true);
+    try {
+      const res = await fetch(
+        `https://ka52928lr8.execute-api.eu-north-1.amazonaws.com/new-visitor/${editUser.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editUser),
+        }
+      );
+
+      if (!res.ok) throw new Error("Update failed");
+
+      // update UI instantly
+      setUsers((prev) =>
+        prev.map((u) => (u.id === editUser.id ? editUser : u))
+      );
+
+      setEditUser(null);
+    } catch (err) {
+      alert("Failed to update visitor");
+      console.error(err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -246,35 +278,44 @@ export default function VisitorUsersList() {
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-300 font-medium">
-                              {user.name.charAt(0).toUpperCase()}
+                              {user.clientName.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                              <div className="font-medium text-white">{user.name}</div>
+                              <div className="font-medium text-white">{user.clientName}</div>
                               <div className="text-sm text-slate-500 md:hidden truncate max-w-[180px]">
-                                {user.email}
+                                {user.clientEmail}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-5 text-slate-300 hidden md:table-cell">
-                          {user.email}
+                          {user.clientEmail}
                         </td>
                         <td className="px-6 py-5 text-slate-300">
-                          {user.phone}
+                          {user.clientPhone}
                         </td>
                         <td className="px-6 py-5 hidden sm:table-cell">
                           <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-blue-950 text-blue-300 border border-blue-900/50">
-                            {user.referral}
+                            {user.source}
                           </span>
                         </td>
-                        <td className="px-6 py-5 text-right">
-                          <button
-                            onClick={() => setSelectedUser(user)}
-                            className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm font-medium transition-colors"
-                          >
-                            <Eye size={16} />
-                            View
-                          </button>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => setSelectedUser(user)}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm"
+                            >
+                              <Eye size={16} />
+                              View
+                            </button>
+
+                            <button
+                              onClick={() => setEditUser(user)}
+                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-800 hover:bg-blue-700 border border-blue-700 rounded-lg text-sm"
+                            >
+                              Edit
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -321,7 +362,7 @@ export default function VisitorUsersList() {
           >
             <div className="sticky top-0 z-10 bg-slate-950 border-b border-slate-800 px-6 py-5 flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-semibold text-white">{selectedUser.name}</h2>
+                <h2 className="text-2xl font-semibold text-white">{selectedUser.clientName}</h2>
                 <p className="text-sm text-slate-400 mt-0.5">ID: {selectedUser.id}</p>
               </div>
               <button
@@ -339,14 +380,14 @@ export default function VisitorUsersList() {
                   <div>
                     <h3 className="text-lg font-semibold text-blue-400 mb-4">Contact Information</h3>
                     <div className="space-y-4">
-                      <InfoRow icon={Mail} label="Email" value={selectedUser.email} />
-                      <InfoRow icon={Phone} label="Phone" value={selectedUser.phone} />
+                      <InfoRow icon={Mail} label="Email" value={selectedUser.clientEmail} />
+                      <InfoRow icon={Phone} label="Phone" value={selectedUser.clientPhone} />
                       <InfoRow
                         icon={MapPin}
                         label="City"
-                        value={selectedUser.city === "others" ? selectedUser.cityOther || "—" : selectedUser.city}
+                        value={selectedUser.clientLocation}
                       />
-                      <InfoRow icon={MapPin} label="Pincode" value={selectedUser.pincode} />
+                      <InfoRow icon={MapPin} label="City-Other" value={selectedUser.cityOther} />
                     </div>
                   </div>
                 </div>
@@ -356,13 +397,13 @@ export default function VisitorUsersList() {
                   <div>
                     <h3 className="text-lg font-semibold text-blue-400 mb-4">Referral & Project</h3>
                     <div className="space-y-4 text-sm">
-                      <DetailRow label="Referral Type" value={selectedUser.referral} />
+                      <DetailRow label="Referral Type" value={selectedUser.source} />
                       <DetailRow label="Direct Source" value={selectedUser.directSource || "—"} />
-                      <DetailRow label="Source Details" value={selectedUser.directSourceOthers || "—"} />
-                      <DetailRow label="Channel Partner Name" value={selectedUser.brokerName || "—"} />
-                      <DetailRow label="Channel Partner Phone" value={selectedUser.brokerPhone || "—"} />
-                      <DetailRow label="Channel Partner Company/ID" value={selectedUser.brokerId || "—"} />
-                      <DetailRow label="Project Configuration" value={selectedUser.projectConfig || "—"} />
+                      <DetailRow label="Source Details" value={selectedUser.directSourceOther || "—"} />
+                      <DetailRow label="Channel Partner Name" value={selectedUser.channelPartnerName || "—"} />
+                      <DetailRow label="Channel Partner Phone" value={selectedUser.channelPartnerPhone || "—"} />
+                      <DetailRow label="Channel Partner Company/ID" value={selectedUser.channelPartnerCompany || "—"} />
+                      <DetailRow label="Project Configuration" value={selectedUser.configuration || "—"} />
                       <DetailRow label="Booking Timeline" value={selectedUser.projectDuration || "—"} />
                     </div>
                   </div>
@@ -380,9 +421,10 @@ export default function VisitorUsersList() {
                       <AlertCircle className="text-red-500" size={28} />
                     )}
                     <div>
-                      <div className="font-medium text-lg">
+                      {selectedUser.source === 'direct' && <div className="font-medium text-lg">
                         OTP {selectedUser.otpVerified ? "Verified" : "Not Verified"}
-                      </div>
+                      </div>}
+                      
                       <div className="text-sm text-slate-400 mt-0.5">
                         Submitted: {selectedUser.submittedAt || "—"}
                       </div>
@@ -401,6 +443,85 @@ export default function VisitorUsersList() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editUser && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50"
+          onClick={() => setEditUser(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-slate-900 border border-slate-800 rounded-xl w-full max-w-3xl"
+          >
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-800">
+              <h2 className="text-xl font-semibold">Edit Visitor</h2>
+              <button onClick={() => setEditUser(null)}>
+                <X />
+              </button>
+            </div>
+
+            <div className="p-6 grid md:grid-cols-2 gap-6">
+              <EditInput
+                label="Client Name"
+                value={editUser.clientName}
+                onChange={(v) => setEditUser({ ...editUser, clientName: v })}
+              />
+              <EditInput
+                label="Email"
+                value={editUser.clientEmail}
+                onChange={(v) => setEditUser({ ...editUser, clientEmail: v })}
+              />
+              <EditInput
+                label="Phone"
+                value={editUser.clientPhone}
+                onChange={(v) => setEditUser({ ...editUser, clientPhone: v })}
+              />
+              <EditInput
+                label="City"
+                value={editUser.clientLocation}
+                onChange={(v) => setEditUser({ ...editUser, clientLocation: v })}
+              />
+              <EditInput
+                label="Project Duration"
+                value={editUser.projectDuration}
+                onChange={(v) => setEditUser({ ...editUser, projectDuration: v })}
+              />
+              <EditInput
+                label="Configuration"
+                value={editUser.configuration}
+                onChange={(v) => setEditUser({ ...editUser, configuration: v })}
+              />
+
+              <div className="md:col-span-2">
+                <label className="text-xs text-slate-400 uppercase">Notes</label>
+                <textarea
+                  value={editUser.notes || ""}
+                  onChange={(e) =>
+                    setEditUser({ ...editUser, notes: e.target.value })
+                  }
+                  className="mt-1 w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-lg min-h-[100px]"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-4 px-6 py-5 border-t border-slate-800">
+              <button
+                onClick={() => setEditUser(null)}
+                className="px-6 py-2.5 bg-slate-800 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                disabled={saving}
+                onClick={handleUpdateVisitor}
+                className="px-6 py-2.5 bg-blue-700 hover:bg-blue-600 rounded-lg font-medium disabled:opacity-50"
+              >
+                {saving ? "Saving..." : "Update"}
+              </button>
             </div>
           </div>
         </div>
@@ -431,7 +552,7 @@ export default function VisitorUsersList() {
                 />
                 <span>All Submissions</span>
               </label>
-
+              
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="radio"
@@ -500,6 +621,27 @@ function DetailRow({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between py-1 border-b border-slate-800 last:border-0">
       <span className="text-slate-400">{label}</span>
       <span className="font-medium text-right">{value}</span>
+    </div>
+  );
+}
+
+function EditInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="text-xs text-slate-400 uppercase">{label}</label>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-lg focus:border-blue-600 outline-none"
+      />
     </div>
   );
 }
